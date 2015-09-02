@@ -1,0 +1,62 @@
+{% set os_map = salt['grains.filter_by']({
+    'CentOS': {
+        'log_dir_domain': '/var/log/jbossas/domain',
+        'install_type': 'zip',
+        'jboss_home': '/usr/share/jbossas',
+        'service': 'jbossas-domain',
+        'unzip_path': '/usr/share/jbossas',
+        'version_file': 'version.txt',
+        'zip_file': 'jboss-eap-6.4.0.zip',
+        'zip_file_md5': '9a5d37631919a111ddf42ceda1a9f0b5'
+    },
+    'RedHat': {
+        'install_type': 'rpm',
+        'jboss_home': '/usr/share/jbossas',
+        'rpmpkgs': {            
+          'jbossas-appclient': '7.5.1-5.Final_redhat_3.1.ep6.el6',
+          'jbossas-bundles': '7.5.1-5.Final_redhat_3.1.ep6.el6',
+          'jbossas-core': '7.5.1-5.Final_redhat_3.1.ep6.el6',
+          'jbossas-domain': '7.5.1-5.Final_redhat_3.1.ep6.el6',
+          'jbossas-hornetq-native': '2.3.25-3.Final_redhat_1.ep6.el6',
+          'jbossas-jbossweb-native': '1.1.32-3.redhat_1.ep6.el6',
+          'jbossas-modules-eap': '7.5.1-6.Final_redhat_3.1.ep6.el6',
+          'jbossas-product-eap': '7.5.1-5.Final_redhat_3.1.ep6.el6',
+          'jbossas-standalone': '7.5.1-5.Final_redhat_3.1.ep6.el6',
+          'jbossas-welcome-content-eap': '7.5.1-5.Final_redhat_3.1.ep6.el6'            
+        },
+        'service': 'jbossas-domain',
+        'uninstall_dirs': (
+          '/etc/jbossas',
+          '/usr/share/jbossas',
+          '/var/cache/jbossas',
+          '/var/lib/jbossas',
+          '/var/log/jbossas'  
+        ), 
+        'version_file': '/usr/share/jbossas/version.txt'
+    },
+}, grain='os', merge=salt['pillar.get']('jboss:lookup')) %}
+
+{# Settings dictionary with default values #}
+{% set default_settings = {
+    'jboss': {
+        'apache_home': '/etc/httpd',
+        'cli_file_temp_dir': '/tmp',
+        'jdbc_driver_oracle': 'ojdbc7.jar',
+        'jboss_config': {
+          'cli_path': os_map['jboss_home']+'/bin/jboss-cli.sh',
+          'controller': 'localhost:9999',
+          'cli_user': salt['pillar.get']('jboss:admin_account:username'),
+          'cli_password': salt['pillar.get']('jboss:admin_account:password')
+        },
+        'jboss_home_environment_var': 'JBOSS_HOME',
+        'jboss_user': 'jboss',
+        'oracle_client_home': '/usr/lib/oracle/12.1/client64',
+        'profileddir': '/etc/profile.d'
+    }
+} %}
+
+{# Merge os_map into settings dictionary #}
+{% do default_settings.jboss.update(os_map) %}
+
+{# Update settings defaults from pillar data #}
+{% set jboss_settings = salt['pillar.get']('jboss', default=default_settings.jboss, merge=True) %}

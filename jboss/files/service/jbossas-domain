@@ -1,0 +1,483 @@
+#!/bin/sh
+#
+# JBoss EAP Domain Control Script
+#
+### BEGIN INIT INFO
+# Provides: jbossas-domain
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start:
+# Default-Stop:
+# Description: JBoss EAP Domain Server
+# Short-Description: start and stop jbossas-domain
+### END INIT INFO
+# chkconfig: - 80 20
+# description: JBoss EAP Domain Server
+# 
+
+# Source function library.
+if [ -r /etc/rc.d/init.d/functions ]; then
+   . /etc/rc.d/init.d/functions
+fi
+
+NAME=`basename $0`
+JBNAME=jbossas
+unset ISBOOT
+if [ ${NAME:0:1} = "S" -o ${NAME:0:1} = "K" ]
+then
+        NAME=${NAME:3}
+        ISBOOT=1
+fi
+
+# Source configuration.
+[ -f /etc/java/java.conf ] && . /etc/java/java.conf
+#read in system wide jboss configuration
+[ -f /etc/jbossas/$JBNAME.conf ] && . /etc/jbossas/$JBNAME.conf
+#read in service-specific jboss configuration
+[ -f /etc/sysconfig/${NAME} ] && . /etc/sysconfig/${NAME}
+
+export JAVA_HOME=${JAVA_HOME:-"/usr/lib/jvm/jre"}
+
+#define where jboss is - this is the directory containing directories log, bin, conf etc
+JBOSS_HOME=${JBOSS_HOME:-"/usr/share/jbossas"}
+
+#make sure java is on your path
+JAVAPTH=${JAVAPTH:-"$JAVA_HOME/bin"}
+
+#define the default config to start
+JBOSSCONF=${JBOSSCONF:-"domain"}
+
+#define the script to use to start jboss
+JBOSSSH=${JBOSSSH:-"$JBOSS_HOME/bin/$JBOSSCONF.sh"}
+
+#define the user under which jboss will run, or use RUNASIS to run as the current user
+JBOSS_USER=${JBOSS_USER:-"jboss"}
+
+#define the group under which jboss will run
+JBOSS_GROUP=${JBOSS_GROUP:-"jboss"}
+
+#define the lock file for this jboss instance
+if [ $JBOSSCONF == "standalone" ]; then
+   JBOSSLOCK=/var/lock/subsys/$JBNAME
+else
+   JBOSSLOCK=/var/lock/subsys/$JBNAME-$JBOSSCONF
+fi
+
+#define the pid file for this jboss instance
+JBOSSPID=${JBOSSPID:-"/var/run/$JBNAME-$JBOSSCONF"}
+
+# Set the defaults.
+LOGFILE=/var/log/$JBNAME/$JBOSSCONF/$JBOSSCONF.log
+
+#define what will be done with the console log
+JBOSS_CONSOLE_LOG=${JBOSS_CONSOLE_LOG:-"/var/log/$JBNAME/$JBOSSCONF/console.log"}
+
+#define the timeout period for starting the server
+JBOSS_STARTUP_WAIT=${JBOSS_STARTUP_WAIT:-"60"}
+                                                                                
+#define the timeout period for stopping the server
+JBOSS_SHUTDOWN_WAIT=${JBOSS_SHUTDOWN_WAIT:-"20"}
+
+#define the server configuration
+JBOSS_SERVER_CONFIG=${JBOSS_SERVER_CONFIG:-""}
+
+#define the host configuration
+JBOSS_HOST_CONFIG=${JBOSS_HOST_CONFIG:-""}
+
+if [ ! -z $JBOSS_HOST_CONFIG ]; then
+   JBOSSSH="$JBOSSSH --host-config=$JBOSS_HOST_CONFIG"
+fi
+
+if [ ! -z $JBOSS_SERVER_CONFIG ]; then
+   CMD_START="cd $JBOSS_HOME/bin; $JBOSSSH -c $JBOSS_SERVER_CONFIG"
+else
+   CMD_START="cd $JBOSS_HOME/bin; $JBOSSSH"
+fi
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x /sbin/runuser ]
+then
+	SU=runuser
+else
+	SU=su
+fi
+
+if [ "$JBOSS_USER" = "RUNASIS" ]; then
+  SUBIT=""
+else
+  SUBIT="$SU - $JBOSS_USER -s /bin/sh -c "
+fi
+
+if [ -z "`echo $PATH | grep $JAVAPTH`" ]; then
+  export PATH=$PATH:$JAVAPTH
+fi
+
+if [ -a $JBOSS_HOME ] && [ ! -d "$JBOSS_HOME" ]; then
+  echo JBOSS_HOME does not exist as a valid directory : $JBOSS_HOME >> $LOGFILE
+  if [ "$JBOSS_USER" != "RUNASIS" ]; then
+      chown $JBOSS_USER:$JBOSS_GROUP $LOGFILE
+  fi
+  exit 1
+fi
+
+
+RETVAL=0
+
+function procrunning() {
+   procid=0
+   JBOSSSH_only=`echo $JBOSSSH|awk {'print $1'}`
+   for procid in `pidof -x "$JBOSSSH_only"`; do
+          ps -fp $procid | grep $JBOSSCONF > /dev/null && pid=$procid
+   done
+}
+
+start() {
+    #check if process is already running
+    procrunning
+    if [ ! $pid = '0' ]; then
+            success "${NAME} startup"
+            echo -n -e "\nProcess already running"
+            echo -n -e "\n"
+	    return 0
+    fi
+
+    echo -n $"Starting ${NAME}: "
+
+    # if lock file exists
+    if [ -f $JBOSSLOCK ]; then
+        procrunning
+        if [ ! $pid = '0' ]; then
+           failure "${NAME} startup"
+	   echo -n -e "\nProcess dead and lock file exists"
+	   echo -n -e "\n"
+	   return 2
+        fi
+    fi
+
+    if [ "$JBOSS_USER" != "RUNASIS" ]; then
+        if [ -z "`id -u $JBOSS_USER 2>/dev/null`" ]; then
+            failure "${NAME} startup"
+            echo -n -e "\nUser $JBOSS_USER does not exist. Create user first."
+	    echo -n -e "\n"
+            return 2
+        fi
+        if [ -z "`id -g $JBOSS_GROUP 2>/dev/null`" ]; then
+            failure "${NAME} startup"
+            echo -n -e "\nGroup $JBOSS_GROUP does not exist. Create group first."
+	    echo -n -e "\n"
+            return 3
+        fi
+    fi
+
+    ## determine the size of server.log if it exists
+    if [ -f /var/log/$JBNAME/$JBOSSCONF/server.log ] ; then
+        server_log_init_size=`wc -c /var/log/$JBNAME/$JBOSSCONF/server.log`
+    else
+        server_log_init_size=0
+    fi
+
+    for logfile in boot.log console.log server.log; do
+        if [ -f /var/log/$JBNAME/$JBOSSCONF/$logfile ]; then
+            if [ "$JBOSS_USER" != "RUNASIS" ]; then
+                $SU $JBOSS_USER -s /bin/sh -c "touch /var/log/$JBNAME/$JBOSSCONF/$logfile >/dev/null 2>&1"
+                if [ ! $? -eq 0 ]; then
+                    failure "${NAME} startup"
+                    echo -n -e "\nLogfile /var/log/$JBNAME/$JBOSSCONF/$logfile exists but not writable by $JBOSS_USER."
+                    echo -n -e "\n"
+                    return 4
+                fi
+            else
+                if [ ! -w /var/log/$JBNAME/$JBOSSCONF/$logfile ]; then
+                    failure "${NAME} startup"
+                    echo -n -e "\nLogfile /var/log/$JBNAME/$JBOSSCONF/$logfile exists but not writable."
+                    echo -n -e "\n"
+                    return 4
+                fi
+            fi
+        fi
+    done
+
+    # check if JBOSS_HOME directory exists, create it if it does not
+    if [ ! -d $JBOSS_HOME ]; then
+       #check permission
+       p=$JBOSS_HOME
+       while [ $p != "/" ]; do
+           p=`dirname $p`
+           # if it's a directory but not writable
+           if  [ -d $p ] && [ ! -w $p ]; then
+               echo -n -e "\nDirectory $p is not writable, cannot create $JBOSS_HOME."
+               echo -n -e "\n"
+               return 4
+           fi
+       done
+       mkdir -p $JBOSS_HOME
+    fi
+
+    #clone the directory if it doesn't exist (copy from /usr/share/jbossas)
+    #$JBOSS_HOME may already be created when symlinking the log dir
+    if [ $JBOSS_HOME != "/usr/share/jbossas" ] && [ ! -d $JBOSS_HOME/bin ]; then
+        mkdir -p $JBOSS_HOME
+        cp -pL -R /usr/share/jbossas/* $JBOSS_HOME/
+    fi
+
+    #make JBOSS_HOME owned by $JBOSS_USER:$JBOSS_GROUP
+    if [ "$JBOSS_USER" != "RUNASIS" ]; then
+        chown -R $JBOSS_USER:$JBOSS_GROUP $JBOSS_HOME
+    fi
+
+    echo CMD_START = $CMD_START > $LOGFILE
+
+    if [ "$JBOSS_USER" != "RUNASIS" ]; then
+        chown $JBOSS_USER:$JBOSS_GROUP $LOGFILE
+    fi
+
+    #create the log file
+    if [ $JBOSS_CONSOLE_LOG != "\/dev\/null" ] & [ ! -d `dirname $JBOSS_CONSOLE_LOG` ]; then
+        mkdir -p `dirname $JBOSS_CONSOLE_LOG`
+        if [ "$JBOSS_USER" != "RUNASIS" ]; then
+            chown -R $JBOSS_USER:$JBOSS_GROUP `dirname $JBOSS_CONSOLE_LOG`
+        fi
+    fi
+
+    if [ -n "$JBOSS_CONSOLE_LOG" -a ! -d "$JBOSS_CONSOLE_LOG" ]; then
+      # Fix for BZ#1020882
+      if [ -s $JBOSS_CONSOLE_LOG ] ; then
+      # if the file exists and is not empty, move it
+         mv $JBOSS_CONSOLE_LOG $JBOSS_CONSOLE_LOG.`date +"%Y-%m-%d-%H-%M-%S"`
+      fi
+      # ensure the file exists
+      touch $JBOSS_CONSOLE_LOG
+      if [ "$JBOSS_USER" != "RUNASIS" ]; then
+          chown $JBOSS_USER:$JBOSS_GROUP $JBOSS_CONSOLE_LOG
+      fi
+    fi
+
+    if [ -n "$JBOSS_CONSOLE_LOG" -a ! -f "$JBOSS_CONSOLE_LOG" ]; then
+      touch $LOGFILE
+      echo "WARNING: location for saving console log invalid: $JBOSS_CONSOLE_LOG" >> $LOGFILE
+      echo "WARNING: ignoring it and using /dev/null" >> $LOGFILE
+      if [ "$JBOSS_USER" != "RUNASIS" ]; then
+          chown $JBOSS_USER:$JBOSS_GROUP $LOGFILE
+      fi
+      JBOSS_CONSOLE_LOG="/dev/null"
+    fi
+
+    cd $JBOSS_HOME/bin
+
+    # determine userid to start jboss
+    if [ -z "$SUBIT" ]; then
+        eval $CMD_START >>${JBOSS_CONSOLE_LOG} 2>&1 &
+    else
+        $SUBIT "export JAVA_HOME=$JAVA_HOME; export JAVA_OPTS=\"$JAVA_OPTS\";$CMD_START >${JBOSS_CONSOLE_LOG} 2>&1 &" 
+    fi
+
+    count=0
+    launched=false
+
+    until [ $count -gt $JBOSS_STARTUP_WAIT ]
+    do
+      grep -q 'JBAS015874:' $JBOSS_CONSOLE_LOG > /dev/null 2>&1
+      rc1=$?
+      ## check server.log content since starting of the server if it exists
+      if [ -f  /var/log/$JBNAME/$JBOSSCONF/server.log ]; then
+          tail -c +$server_log_init_size /var/log/$JBNAME/$JBOSSCONF/server.log | grep -q 'JBAS015874:' > /dev/null 2>&1
+          rc2=$?
+      else
+          rc2=1
+      fi
+      if [ $rc1 -eq 0 ] || [ $rc2 -eq 0 ] ; then
+        launched=true
+        success "${NAME} startup"
+        echo
+        break
+      fi
+      sleep 10
+      let count=$count+10;
+    done
+
+    JBOSSSH_only=`echo $JBOSSSH|awk {'print $1'}`
+    echo `pidof -x "$JBOSSSH_only"` > $JBOSSPID
+    if [ "$JBOSS_USER" != "RUNASIS" ]; then
+       chown $JBOSS_USER:$JBOSS_GROUP $JBOSSPID
+    fi
+    read ppid < $JBOSSPID
+    if [ ! -z $ppid ]; then
+       if [ `ps --pid $ppid 2> /dev/null | grep -c $ppid 2> /dev/null` -eq '1' ]; then
+            if [ $launched == "false" ]; then
+            echo -n -e "\n${NAME} startup has timed out, process still running. \n"
+            echo
+            fi
+       else
+            failure "${NAME} startup"
+            rm $JBOSSPID
+            echo -n -e "\nProcess crashed on startup"
+            echo
+            return 2
+       fi
+    else
+       failure "${NAME} startup"
+       rm $JBOSSPID
+       echo -n -e "\nProcess crashed on startup"
+       echo
+       return 3
+    fi
+    touch $JBOSSLOCK
+    return 0
+
+}
+
+stop() {
+    echo -n $"Stopping ${NAME}: "
+    count=0;
+    if [ -f $JBOSSPID ]; then
+       #PID file exists
+       read kpid < $JBOSSPID
+       let kwait=$JBOSS_SHUTDOWN_WAIT
+        # Try issuing SIGTERM
+
+       for id in `ps --ppid $kpid | awk '{print $1}' | grep -v "^PID$"`; do
+         $SUBIT "kill -15 $id" 2>/dev/null
+       done
+       until [ `ps --pid $kpid 2> /dev/null | grep -c $kpid 2> /dev/null` -eq '0' ] || [ $count -gt $kwait ]
+       do
+         sleep 10
+         let count=$count+10;
+       done
+
+       if [ $count -gt $kwait ]; then
+         for id in `ps --ppid $kpid | awk '{print $1}' | grep -v "^PID$"`; do
+           $SUBIT "kill -9 $id" 2>/dev/null
+         done
+       fi
+
+       if [ -f $JBOSSLOCK ]; then 
+           rm -f $JBOSSLOCK
+       fi
+       if [ -f $JBOSSPID ]; then 
+           rm -f $JBOSSPID
+       fi
+
+       if [ -r /etc/rc.d/init.d/functions ]; then
+        success "${NAME} shutdown"
+        echo
+       fi
+       return 0
+    else
+       #PID file doesn't exists
+       pid=0
+       procrunning
+       if [ ! $pid = '0' ]; then
+          let kwait=$JBOSS_SHUTDOWN_WAIT
+          for id in `ps --ppid $pid | awk '{print $1}' | grep -v "^PID$"`; do
+            $SUBIT "kill -15 $id" 2>/dev/null
+          done
+          until [ `ps --pid $pid 2> /dev/null | grep -c $pid 2> /dev/null` -eq '0' ] || [ $count -gt $kwait ]
+          do
+            sleep 10
+            let count=$count+10;
+          done
+
+          if [ $count -gt $kwait ]; then
+            for id in `ps --ppid $pid | awk '{print $1}' | grep -v "^PID$"`; do
+              $SUBIT "kill -9 $id" 2>/dev/null
+            done
+          fi
+       fi
+
+       success "${NAME} shutdown"
+       echo
+       if [ -f $JBOSSLOCK ]; then 
+           rm -f $JBOSSLOCK
+       fi
+       if [ -f $JBOSSPID ]; then 
+           rm -f $JBOSSPID
+       fi
+       return 0
+    fi
+
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $JBOSSLOCK $JBOSSPID
+    return $RETVAL
+}
+
+status() {
+  if [ -f $JBOSSPID ]; then
+    read ppid < $JBOSSPID
+    if [ `ps --pid $ppid 2> /dev/null | grep -c $ppid 2> /dev/null` -eq '1' ]; then
+        echo "${NAME} (pid $ppid) is running";
+        return 0
+    else
+        if [ -f $JBOSSLOCK ]; then
+            echo "${NAME} is dead but subsys locked";
+            return 2
+        fi
+        if [ -f $JBOSSPID ]; then
+            echo "${NAME} is dead but pid file exists";
+            return 1
+        fi
+    fi
+  else
+    #no pidfile, but let's check just in case
+    pid=0
+    procrunning
+    if [ $pid == 0 ]; then
+        if [ -f $JBOSSLOCK ]; then
+            echo "${NAME} is dead but subsys locked";
+            return 2
+        fi
+        if [ -f $JBOSSPID ]; then
+            echo "${NAME} is dead but pid file exists";
+            return 1
+        fi
+        echo "${NAME} is stopped";
+        return 3
+    else
+        echo "${NAME} (pid $pid) is running, but pid file does not exist";
+        return 0
+    fi
+  fi
+}
+                                                                                
+# Restart only if process is already running
+condrestart() {
+  if [ -f $JBOSSPID ]; then
+    read ppid < $JBOSSPID
+    if [ `ps --pid $ppid 2> /dev/null | grep -c $ppid 2> /dev/null` -eq '1' ]; then
+	stop
+	sleep 5
+	start
+    fi
+  fi
+}
+
+case "$1" in
+start)
+    start
+    RETVAL=$?
+    ;;
+stop)
+    stop
+    RETVAL=$?
+    ;;
+restart|reload)
+    stop
+    sleep 3
+    start
+    RETVAL=$?
+    ;;
+condrestart)
+    condrestart
+    ;;
+status)
+    status
+    RETVAL=$?
+    ;;
+help)
+    echo "usage: ${NAME} (start|stop|status|restart|help)"
+    ;;
+*)
+    echo "usage: ${NAME} (start|stop|status|restart|help)"
+    exit 1
+esac
+
+exit $RETVAL

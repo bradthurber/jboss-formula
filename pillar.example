@@ -1,0 +1,21 @@
+jboss:
+  admin_account:
+    username: 'jbossadmindev'
+    password: verybadPasswerd
+  domain_connector:
+    username: 'jbossconnector'
+    password_base64_encoded: 'VjRQVDlO=='
+  ldap:
+    base_dn: 'DC=mycompany,DC=com'
+    bind_account:
+      username_dn: 'CN=jbossbind,OU=JBossUsers,OU=Users,OU=Operations,DC=mycompany,DC=com'
+      password: 'verybadPasswerd'
+    server_hostname: ldap-cdc.mycompany.com
+    server_port: 389
+  lookup:
+    install_type: rpm
+  jboss_role_to_ldap_group_mapping:
+    {#- standard available role names: Operator, Maintainer, Auditor, Monitor, Administrator, SuperUser, Deployer #}
+    Administrator: corp-sg-jbossadmins-dev
+    Maintainer: corp-sg-jbossdevelopers-dev
+    Monitor: corp-sg-jbossmonitors  

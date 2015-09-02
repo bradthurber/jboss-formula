@@ -1,0 +1,66 @@
+{%- if 'jboss-member-controller' in salt['grains.get']('roles') %}
+
+{% from "jboss/map.jinja" import jboss_settings with context %}
+
+{% set connector_username = salt['pillar.get']('jboss:domain_connector:username') %}
+
+{# once salt Boron (post 2015.8.0) is available then salt can do the encoding #}
+{% set connector_base64_password = salt['pillar.get']('jboss:domain_connector:password_base64_encoded') %}
+{% set mc_hostname = grains.get('host') %}
+{%- set minion_jboss_environment = grains['environment'] %}
+    
+include:
+  - jboss.service
+  
+change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}:
+  cmd.run:
+    - name: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:write-attribute(name=name,value={{ mc_hostname }})'
+    - user: {{ jboss_settings.jboss_user }}
+    - onlyif: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:read-resource(attributes-only=true)'
+    
+restart_jboss_service_on_member_controller_name_change:
+  module.wait:
+    - name: service.restart
+    - m_name: {{ jboss_settings.service }}
+    - watch:
+      - cmd: change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}
+  
+member_controller_{{ mc_hostname }}_add_ldap_security_realm:
+  cmd.run:
+    - name: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/:add'
+    - user: {{ jboss_settings.jboss_user }}
+    - unless: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/:read-children-names(child-type=security-realm)' | grep LdapManagementRealm
+    
+member_controller_{{ mc_hostname }}_add_connector_password_as_ldap_realm_secret:
+  cmd.run:
+    - user: {{ jboss_settings.jboss_user }}
+    - name: >-
+        {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/server-identity=secret:add(value="'{{ connector_base64_password }}'")'
+    - unless: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/:read-children-names(child-type=server-identity)'|grep secret    
+        
+stop_jboss_service_on_member_on_ldap_realm_secret_add:
+  module.wait:
+    - name: service.stop
+    - m_name: {{ jboss_settings.service }}
+    - watch:
+      - cmd: member_controller_{{ mc_hostname }}_add_connector_password_as_ldap_realm_secret
+
+member_controller_{{ mc_hostname }}_config_remote_dc:
+  file.blockreplace:
+    - marker_start: '<domain-controller>'
+    - marker_end: '</domain-controller>'
+    - name: {{ jboss_settings.jboss_home }}/domain/configuration/host.xml 
+    - show_changes: True
+    - content: >
+{%- for server, fqdn in salt['mine.get']('G@roles:jboss-domain-controller and G@environment:'~minion_jboss_environment, 'fqdn', expr_form='compound').items() %}      
+        <remote host="{{ fqdn }}" port="9999" security-realm="LdapManagementRealm" username="{{ connector_username }}"/>
+{%- endfor %}      
+  
+restart_jboss_service_on_member_{{ mc_hostname }}_on_connect_to_dc:
+  module.wait:
+    - name: service.restart
+    - m_name: {{ jboss_settings.service }}
+    - watch:
+      - file: member_controller_{{ mc_hostname }}_config_remote_dc
+
+{%- endif %}
