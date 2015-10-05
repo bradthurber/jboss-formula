@@ -1,4 +1,5 @@
-{%- if 'jboss-domain-controller' in salt['grains.get']('roles') %}  
+{%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
+{%- if 'jboss-domain-controller' %}  
 
 {% from "jboss/map.jinja" import jboss_settings with context %}
 
