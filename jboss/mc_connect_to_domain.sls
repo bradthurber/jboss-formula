@@ -1,7 +1,7 @@
 {% from "jboss/map.jinja" import jboss_settings with context %}
 
-{%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
-{%- if jboss_domain_controller == False %}  
+{% set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', False) %}
+{% if jboss_domain_controller == false %}  
 
 {% set connector_username = salt['pillar.get']('jboss:domain_connector:username') %}
 
@@ -64,4 +64,4 @@ restart_jboss_service_on_member_{{ mc_hostname }}_on_connect_to_dc:
     - watch:
       - file: member_controller_{{ mc_hostname }}_config_remote_dc
 
-{%- endif %}
+{% endif %}
