@@ -1,5 +1,5 @@
 {%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
-{%- if 'jboss-domain-controller' %}  
+{%- if 'jboss_domain_controller' %}  
 
 {% from "jboss/map.jinja" import jboss_settings with context %}
 
