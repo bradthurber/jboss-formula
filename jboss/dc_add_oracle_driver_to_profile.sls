@@ -1,7 +1,7 @@
+{% from "jboss/map.jinja" import jboss_settings with context %}
+
 {%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
 {%- if jboss_domain_controller == True %}  
-
-{% from "jboss/map.jinja" import jboss_settings with context %}
 
 include:
   - jboss.service

@@ -1,6 +1,7 @@
 {% from "jboss/map.jinja" import jboss_settings with context %}
 
-{%- if 'jboss-domain-controller' in salt['grains.get']('roles') %}
+{%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
+{%- if jboss_domain_controller == True %}  
 
 {# iterate through the salt pillar JBOSS Role to LDAP Group mappings to make sure all of then exist in JBoss #}
 {# note this does not remove mappings that already may exist #}

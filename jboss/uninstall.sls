@@ -22,7 +22,7 @@ remove_jboss_directory_{{ dir }}:
 {%- endfor %}
 
     
-## TODO: uninstall for non-rpm based installations
+## TODO: uninstall for non-rpm based installations. May not be worth it. Why not just use ephemeral instances.
 
 {%- endif %}
 
@@ -30,15 +30,14 @@ remove_jboss_directory_{{ dir }}:
 remove_grain_jboss_ldap_configured:
   grains.absent:
     - name: jboss_ldap_configured
+    - destructive: True
 remove_grain_jboss_role:
   grains.absent:
     - name: roles.jboss
+    - destructive: True
 remove_grain_jboss_domain_controller:
   grains.absent:
-    - name: roles.jboss-domain-controller
-remove_grain_jboss_member_controller:
-  grains.absent:
-    - name: roles.jboss-member-controller
+    - name: jboss_domain_controller
 remove_grain_mod-cluster-node:
   grains.absent:
     - name: roles.mod-cluster-node

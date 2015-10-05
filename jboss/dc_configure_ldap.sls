@@ -1,6 +1,7 @@
 {% from "jboss/map.jinja" import jboss_settings with context %}
 
-{%- if 'jboss-domain-controller' in salt['grains.get']('roles') %}
+{%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
+{%- if jboss_domain_controller == True %}  
 
 {%- if "jboss_ldap_configured" not in grains or grains["jboss_ldap_configured"] != True %}
 # JBoss not configured for ldap - so let's do it now

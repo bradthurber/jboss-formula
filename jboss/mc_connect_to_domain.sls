@@ -1,6 +1,7 @@
-{%- if 'jboss-member-controller' in salt['grains.get']('roles') %}
-
 {% from "jboss/map.jinja" import jboss_settings with context %}
+
+{%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', 'False') %}
+{%- if jboss_domain_controller == False %}  
 
 {% set connector_username = salt['pillar.get']('jboss:domain_connector:username') %}
 
@@ -52,7 +53,7 @@ member_controller_{{ mc_hostname }}_config_remote_dc:
     - name: {{ jboss_settings.jboss_home }}/domain/configuration/host.xml 
     - show_changes: True
     - content: >
-{%- for server, fqdn in salt['mine.get']('G@roles:jboss-domain-controller and G@environment:'~minion_jboss_environment, 'fqdn', expr_form='compound').items() %}      
+{%- for server, fqdn in salt['mine.get']('G@jboss_domain_controller:True and G@environment:'~minion_jboss_environment, 'fqdn', expr_form='compound').items() %}      
         <remote host="{{ fqdn }}" port="9999" security-realm="LdapManagementRealm" username="{{ connector_username }}"/>
 {%- endfor %}      
   
