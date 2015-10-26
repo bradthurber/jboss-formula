@@ -1,12 +1,12 @@
-{%- from "jboss/map.jinja" import jboss_settings with context %}
+{%- from "jboss/map.jinja" import jboss with context %}
 /core-service=management/access=authorization:write-attribute(name=provider, value=rbac)
 /host=master/core-service=management/security-realm=LdapManagementRealm:add
-/host=master/core-service=management/ldap-connection=LdapConnection/:add(search-credential={{ jboss_settings.ldap.bind_account.password }},url=ldap://{{ jboss_settings.ldap.server_hostname }}:{{ jboss_settings.ldap.server_port }},search-dn="{{ jboss_settings.ldap.bind_account.username_dn }}")
-/host=master/core-service=management/security-realm=LdapManagementRealm/authentication=ldap:add(base-dn="{{ jboss_settings.ldap.base_dn }}", recursive=true, advanced-filter="(sAMAccountName={0})", connection="LdapConnection")
+/host=master/core-service=management/ldap-connection=LdapConnection/:add(search-credential={{ jboss.ldap.bind_account.password }},url=ldap://{{ jboss.ldap.server_hostname }}:{{ jboss.ldap.server_port }},search-dn="{{ jboss.ldap.bind_account.username_dn }}")
+/host=master/core-service=management/security-realm=LdapManagementRealm/authentication=ldap:add(base-dn="{{ jboss.ldap.base_dn }}", recursive=true, advanced-filter="(sAMAccountName={0})", connection="LdapConnection")
 batch
 /host=master/core-service=management/security-realm=LdapManagementRealm/authorization=ldap:add(connection="LdapConnection")
 /host=master/core-service=management/security-realm=LdapManagementRealm/authorization=ldap/group-search=principal-to-group:add(group-attribute="memberOf",iterative=true,group-dn-attribute="dn", group-name="SIMPLE",group-name-attribute="CN")
 run-batch
-/core-service=management/access=authorization/role-mapping=SuperUser/include=user-{{ jboss_settings.admin_account.username }}:add(name={{ jboss_settings.admin_account.username }}, type=USER)
+/core-service=management/access=authorization/role-mapping=SuperUser/include=user-{{ jboss.admin_account.username }}:add(name={{ jboss.admin_account.username }}, type=USER)
 /host=master/core-service=management/management-interface=http-interface/:write-attribute(name=security-realm,value=LdapManagementRealm)
 /host=master/core-service=management/management-interface=native-interface/:write-attribute(name=security-realm,value=LdapManagementRealm)

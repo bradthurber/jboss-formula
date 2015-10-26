@@ -1,7 +1,7 @@
-{% from "jboss/map.jinja" import jboss_settings with context %}
+{% from "jboss/map.jinja" import jboss with context %}
 
 # set JBOSS environment variables (ex: JBOSS_HOME)
-{{ jboss_settings.profileddir }}/jboss_env.sh:
+{{ jboss.profileddir }}/jboss_env.sh:
   file.managed:
     - source: salt://jboss/files/jboss_env.sh
     - user: root

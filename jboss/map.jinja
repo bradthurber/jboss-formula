@@ -59,4 +59,4 @@
 {% do default_settings.jboss.update(os_map) %}
 
 {# Update settings defaults from pillar data #}
-{% set jboss_settings = salt['pillar.get']('jboss', default=default_settings.jboss, merge=True) %}
+{% set jboss = salt['pillar.get']('jboss', default=default_settings.jboss, merge=True) %}

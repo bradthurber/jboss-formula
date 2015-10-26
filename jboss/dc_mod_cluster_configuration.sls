@@ -1,4 +1,4 @@
-{% from "jboss/map.jinja" import jboss_settings with context %}
+{% from "jboss/map.jinja" import jboss with context %}
 
 {%- set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', False) %}
 {%- if jboss_domain_controller == true %}  
@@ -19,15 +19,15 @@ include:
 # turn off mod_cluster advertisement
 turn_off_mod_cluster_advertisement:
   cmd.run:
-    - name: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:write-attribute(name=advertise,value=false)' --user='{{ jboss_settings.admin_account.username }}' --password='{{ jboss_settings.admin_account.password }}' 
-    - onlyif: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:read-attribute(name=advertise)' --user='{{ jboss_settings.admin_account.username }}' --password='{{ jboss_settings.admin_account.password }}' |grep 'result'|grep true
-    - user: {{ jboss_settings.jboss_user }}
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:write-attribute(name=advertise,value=false)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
+    - onlyif: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:read-attribute(name=advertise)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' |grep 'result'|grep true
+    - user: {{ jboss.jboss_user }}
         
 # tell Jboss server the IP addresses of all the apache servers in this jboss domain (grain: environment)     
 configure_mod_cluster_apache_host_ips:
   cmd.run:
-    - name: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:write-attribute(name=proxy-list,value="{{ apache_ips |join(', ') }}")' --user='{{ jboss_settings.admin_account.username }}' --password='{{ jboss_settings.admin_account.password }}' 
-    - unless: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:read-attribute(name=proxy-list)' --user='{{ jboss_settings.admin_account.username }}' --password='{{ jboss_settings.admin_account.password }}' | grep '"{{ apache_ips |join(', ') }}"'
-    - user: {{ jboss_settings.jboss_user }}
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:write-attribute(name=proxy-list,value="{{ apache_ips |join(', ') }}")' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
+    - unless: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:read-attribute(name=proxy-list)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' | grep '"{{ apache_ips |join(', ') }}"'
+    - user: {{ jboss.jboss_user }}
     
 {%- endif %}   

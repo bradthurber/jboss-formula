@@ -1,6 +1,6 @@
-{% from "jboss/map.jinja" import jboss_settings with context %}
+{% from "jboss/map.jinja" import jboss with context %}
 
-{% if jboss_settings.install_type == 'zip' %}
+{% if jboss.install_type == 'zip' %}
 # copy the startup script to the /etc/init.d/ directory
 # copy jboss_home/bin/init.d/jboss-as-domain.sh /etc/init.d/jboss-as-domain
 copy_jboss_service_startup_script_to_init.d:
@@ -26,7 +26,7 @@ copy_jboss_service_config_file_to_init.d:
 
 {% endif %}
     
-{{ jboss_settings.service }}:
+{{ jboss.service }}:
   service.running:
-    - name: {{ jboss_settings.service }}
+    - name: {{ jboss.service }}
     - enable: True

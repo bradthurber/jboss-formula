@@ -1,4 +1,4 @@
-{% from "jboss/map.jinja" import jboss_settings with context %}
+{% from "jboss/map.jinja" import jboss with context %}
 
 {% set jboss_domain_controller = salt['grains.get']('jboss_domain_controller', False) %}
 {% if jboss_domain_controller == false %}  
@@ -15,34 +15,34 @@ include:
   
 change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}:
   cmd.run:
-    - name: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:write-attribute(name=name,value={{ mc_hostname }})'
-    - user: {{ jboss_settings.jboss_user }}
-    - onlyif: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:read-resource(attributes-only=true)'
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:write-attribute(name=name,value={{ mc_hostname }})'
+    - user: {{ jboss.jboss_user }}
+    - onlyif: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:read-resource(attributes-only=true)'
     
 restart_jboss_service_on_member_controller_name_change:
   module.wait:
     - name: service.restart
-    - m_name: {{ jboss_settings.service }}
+    - m_name: {{ jboss.service }}
     - watch:
       - cmd: change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}
   
 member_controller_{{ mc_hostname }}_add_ldap_security_realm:
   cmd.run:
-    - name: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/:add'
-    - user: {{ jboss_settings.jboss_user }}
-    - unless: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/:read-children-names(child-type=security-realm)' | grep LdapManagementRealm
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/:add'
+    - user: {{ jboss.jboss_user }}
+    - unless: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/:read-children-names(child-type=security-realm)' | grep LdapManagementRealm
     
 member_controller_{{ mc_hostname }}_add_connector_password_as_ldap_realm_secret:
   cmd.run:
-    - user: {{ jboss_settings.jboss_user }}
+    - user: {{ jboss.jboss_user }}
     - name: >-
-        {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/server-identity=secret:add(value="'{{ connector_base64_password }}'")'
-    - unless: {{ jboss_settings.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/:read-children-names(child-type=server-identity)'|grep secret    
+        {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/server-identity=secret:add(value="'{{ connector_base64_password }}'")'
+    - unless: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host={{ mc_hostname }}/core-service=management/security-realm=LdapManagementRealm/:read-children-names(child-type=server-identity)'|grep secret    
         
 stop_jboss_service_on_member_on_ldap_realm_secret_add:
   module.wait:
     - name: service.stop
-    - m_name: {{ jboss_settings.service }}
+    - m_name: {{ jboss.service }}
     - watch:
       - cmd: member_controller_{{ mc_hostname }}_add_connector_password_as_ldap_realm_secret
 
@@ -50,7 +50,7 @@ member_controller_{{ mc_hostname }}_config_remote_dc:
   file.blockreplace:
     - marker_start: '<domain-controller>'
     - marker_end: '</domain-controller>'
-    - name: {{ jboss_settings.jboss_home }}/domain/configuration/host.xml 
+    - name: {{ jboss.jboss_home }}/domain/configuration/host.xml 
     - show_changes: True
     - content: >
 {%- for server, fqdn in salt['mine.get']('G@jboss_domain_controller:True and G@environment:'~minion_jboss_environment, 'fqdn', expr_form='compound').items() %}      
@@ -60,7 +60,7 @@ member_controller_{{ mc_hostname }}_config_remote_dc:
 restart_jboss_service_on_member_{{ mc_hostname }}_on_connect_to_dc:
   module.wait:
     - name: service.restart
-    - m_name: {{ jboss_settings.service }}
+    - m_name: {{ jboss.service }}
     - watch:
       - file: member_controller_{{ mc_hostname }}_config_remote_dc
 

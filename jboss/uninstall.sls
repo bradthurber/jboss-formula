@@ -1,13 +1,13 @@
-{%- from "jboss/map.jinja" import jboss_settings with context %}
+{%- from "jboss/map.jinja" import jboss with context %}
 
 #include:
 #  - jboss.service
 
-{%- if jboss_settings.install_type == 'rpm' %}
+{%- if jboss.install_type == 'rpm' %}
 
 #### Un-Install EAP from RedHat supplied RPM's (requires subscription)
 
-{%- for package, version in jboss_settings.rpmpkgs.items() %}
+{%- for package, version in jboss.rpmpkgs.items() %}
 {{ package }}_{{ version }}_uninstall:
   pkg.purged:
     - name: {{ package }}
@@ -15,7 +15,7 @@
 {%- endfor %}
 
 
-{%- for dir in jboss_settings.uninstall_dirs %}
+{%- for dir in jboss.uninstall_dirs %}
 remove_jboss_directory_{{ dir }}:
   file.absent:
     - name: {{ dir }}
