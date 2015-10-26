@@ -38,8 +38,10 @@ remove_grain_jboss_role:
 remove_grain_jboss_domain_controller:
   grains.absent:
     - name: jboss_domain_controller
+    - destructive: True
 remove_grain_mod-cluster-node:
   grains.absent:
     - name: roles.mod-cluster-node
+    - destructive: True
 
   
