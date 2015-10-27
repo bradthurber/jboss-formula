@@ -1,8 +1,5 @@
 {%- from "jboss/map.jinja" import jboss with context %}
 
-#include:
-#  - jboss.service
-
 {%- if jboss.install_type == 'rpm' %}
 
 #### Un-Install EAP from RedHat supplied RPM's (requires subscription)
@@ -21,7 +18,7 @@ remove_jboss_directory_{{ dir }}:
     - name: {{ dir }}
 {%- endfor %}
 
-    
+
 ## TODO: uninstall for non-rpm based installations. May not be worth it. Why not just use ephemeral instances.
 
 {%- endif %}

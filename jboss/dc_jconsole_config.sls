@@ -1,7 +1,7 @@
 {% from "jboss/map.jinja" import jboss with context %}
 
 include:
-  - jboss.service
+  - jboss
 
 # in order to use home/bin/jconsole.sh a superuser account must be created under the ApplicationRealm
 # Ref: https://access.redhat.com/solutions/443033

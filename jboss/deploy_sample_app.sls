@@ -1,7 +1,7 @@
 {% from "jboss/map.jinja" import jboss with context %}
 
 include:
-  - jboss.service
+  - jboss
   
 ##### setup configuration group and server group for the app
 

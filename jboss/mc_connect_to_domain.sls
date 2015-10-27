@@ -5,26 +5,21 @@
 
 {% set connector_username = salt['pillar.get']('jboss:domain_connector:username') %}
 
-{# once salt Boron (post 2015.8.0) is available then salt can do the encoding #}
+{# TODO: once salt Boron (post 2015.8.0) is available then salt can do the encoding #}
 {% set connector_base64_password = salt['pillar.get']('jboss:domain_connector:password_base64_encoded') %}
 {% set mc_hostname = grains.get('host') %}
 {%- set minion_jboss_environment = grains['environment'] %}
     
 include:
-  - jboss.service
+  - jboss
   
 change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}:
   cmd.run:
     - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:write-attribute(name=name,value={{ mc_hostname }})'
     - user: {{ jboss.jboss_user }}
     - onlyif: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:read-resource(attributes-only=true)'
-    
-restart_jboss_service_on_member_controller_name_change:
-  module.wait:
-    - name: service.restart
-    - m_name: {{ jboss.service }}
-    - watch:
-      - cmd: change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}
+    - watch_in:
+      - module: jboss-restart
   
 member_controller_{{ mc_hostname }}_add_ldap_security_realm:
   cmd.run:
@@ -52,16 +47,11 @@ member_controller_{{ mc_hostname }}_config_remote_dc:
     - marker_end: '</domain-controller>'
     - name: {{ jboss.jboss_home }}/domain/configuration/host.xml 
     - show_changes: True
+    - watch_in:
+      - module: jboss-restart
     - content: >
 {%- for server, fqdn in salt['mine.get']('G@jboss_domain_controller:True and G@environment:'~minion_jboss_environment, 'fqdn', expr_form='compound').items() %}      
         <remote host="{{ fqdn }}" port="9999" security-realm="LdapManagementRealm" username="{{ connector_username }}"/>
 {%- endfor %}      
   
-restart_jboss_service_on_member_{{ mc_hostname }}_on_connect_to_dc:
-  module.wait:
-    - name: service.restart
-    - m_name: {{ jboss.service }}
-    - watch:
-      - file: member_controller_{{ mc_hostname }}_config_remote_dc
-
 {% endif %}

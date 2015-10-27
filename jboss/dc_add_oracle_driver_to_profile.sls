@@ -4,7 +4,7 @@
 {%- if jboss_domain_controller == true %}  
 
 include:
-  - jboss.service
+  - jboss
   
 add_oracle_driver_to_full_ha_profile:
   cmd.run:

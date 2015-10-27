@@ -1,11 +1,6 @@
 {%- from "jboss/map.jinja" import jboss with context %}
 
-#include:
-#  - jboss.service
-
 {%- if jboss.install_type == 'rpm' %}
-
-#### Install EAP from RedHat supplied RPM's (requires subscription)
 
 {%- for package, version in jboss.rpmpkgs.iteritems() %}
 {{ package }}_{{ version }}_install:
@@ -16,14 +11,14 @@
 
 {%- elif jboss.install_type == 'zip' %}
 
-#### Install EAP using a ZIP file
-
 # make sure jboss user is present
 make_sure_jboss_user_is_present:
   user.present:
-    - createhome: True
+    - createhome: False
     - fullname: 'JBoss EAP service user'
+    - gid: 185
     - name: {{ jboss.jboss_user }}
+    - uid: 185
     
 # unzip jboss eap files to minion
 unzip {{ jboss.zip_file }}:
@@ -65,8 +60,36 @@ create_jbossas_domain_log_directory:
     - name: {{ jboss.log_dir_domain }}
     - dir_mode: 755
     - user: {{ jboss.jboss_user }}
+    
+# copy the startup script to the /etc/init.d/ directory
+# copy jboss_home/bin/init.d/jboss-as-domain.sh /etc/init.d/jboss-as-domain
+copy_jboss_service_startup_script_to_init.d:
+  file.managed:
+    - group: root
+    - makedirs: False
+    - mode: 755
+    - name: /etc/init.d/jbossas-domain
+    - source: salt://jboss/files/service/jbossas-domain
+    - user: root
+
+# copy the configuration file to the /etc/jbossas directory
+copy_jboss_service_config_file_to_init.d:
+  file.managed:
+    - dir_mode: 750
+    - group: root
+    - makedirs: True
+    - mode: 644
+    - name: /etc/jbossas/jbossas.conf
+    - source: salt://jboss/files/service/jbossas.conf
+    - template: jinja
+    - user: root
 
 {%- endif %}
+
+{{ jboss.service }}:
+  service.running:
+    - name: {{ jboss.service }}
+    - enable: True
 
 # The following states are inert by default and can be used by other states to
 # trigger a restart or reload as needed.

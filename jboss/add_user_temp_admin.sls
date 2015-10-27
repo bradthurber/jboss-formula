@@ -1,7 +1,7 @@
 {% from "jboss/map.jinja" import jboss with context %}
 
 include:
-  - jboss.service
+  - jboss
 
 # passwords with symbols tend to cause grief with scripting
 relax_symbol_restrict_on_add_user_password:

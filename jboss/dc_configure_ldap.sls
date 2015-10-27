@@ -7,7 +7,7 @@
 # JBoss not configured for ldap - so let's do it now
 
 include:
-  - jboss.service
+  - jboss
 
 # copy the .cli file we want to run to to host
 dc_configure_ldap.cli:

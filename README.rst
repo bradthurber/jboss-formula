@@ -95,12 +95,7 @@ Prerequisite: Oracle Basic client must be installed already
 
 By default the JBoss interfaces are only available to localhost. this makes them available to any host
 
-``jboss.service``
-------------
-
-Metastate used to include service into respective plugin states, included in ``jboss`` state.
-
 ``jboss.uninstall``
 ------------
 
-DANGER - Does what the name implies - fully uninstalls JBoss and removes the JBoss directories
+DANGER - Does what the name implies - fully uninstalls JBoss and removes the JBoss directories. Used primarily for poor-man's testing of the salt JBoss install/config without installing a new OS.

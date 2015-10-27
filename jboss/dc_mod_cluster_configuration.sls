@@ -4,7 +4,7 @@
 {%- if jboss_domain_controller == true %}  
 
 include:
-  - jboss.service
+  - jboss
   
 # collect the IP addresses for all the apache mod_cluster servers in this jboss environment (grain: environment)
 {%- set minion_jboss_environment = grains['environment'] %}
