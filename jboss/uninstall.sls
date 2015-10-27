@@ -29,7 +29,7 @@ remove_grain_jboss_ldap_configured:
     - name: jboss_ldap_configured
     - destructive: True
 remove_grain_jboss_role:
-  grains.absent:
+  grains.remove:
     - name: roles:jboss
     - destructive: True
 remove_grain_jboss_domain_controller:
@@ -37,6 +37,6 @@ remove_grain_jboss_domain_controller:
     - name: jboss_domain_controller
     - destructive: True
 remove_grain_mod-cluster-node:
-  grains.absent:
+  grains.remove:
     - name: roles:mod-cluster-node
     - destructive: True
