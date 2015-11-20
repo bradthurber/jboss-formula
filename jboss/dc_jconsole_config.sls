@@ -7,6 +7,8 @@ include:
 # THIS IS A WORK IN PROGRESS TO CONFIGURE JBOSS FOR JCONSOLE
 #
 # Right now it is just pseudocode!!!
+#
+# This needs to be split into a file for domain controller and a file for each machine running JVMs
 #######################################  
   
   
@@ -57,3 +59,12 @@ make sure the servers you are wanting to monitor are in the full-ha profile!!
 STEP 5
 * Connect to the server via jconsole.sh
 service:jmx:remoting-jmx://{$HOSTNAME}:4447
+
+jconsole requires jdk (to get jconsole) tools.jar from jre, jboss-cli-client.jar from jboss/bin/client dir
+optionally requires file jboss-cli.xml
+WINDOWS
+"%JAVA_HOME%/bin/jconsole.exe" "-J-Djava.class.path=%JAVA_HOME%/lib/jconsole.jar;%JAVA_HOME%/lib/tools.jar;c:\jboss-cli-client.jar" 
+
+LINUX
+jconsole -J-Djava.class.path=/usr/lib/jvm/java-1.8.0-oracle-1.8.0.25.x86_64/lib/jconsole.jar;/usr/lib/jvm/java-1.8.0-oracle-1.8.0.25.x86_64/lib/tools.jar;/usr/share/jbossas/bin/client/jboss-cli-client.jar
+

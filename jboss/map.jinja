@@ -1,11 +1,12 @@
 {% set os_map = salt['grains.filter_by']({
-    'CentOS': {
+    'default': {
         'log_dir_domain': '/var/log/jbossas/domain',
         'install_type': 'zip',
         'jboss_home': '/usr/share/jbossas',
         'service': 'jbossas-domain',
         'unzip_path': '/usr/share/jbossas',
         'version_file': 'version.txt',
+        'zip_file_folder': 'https://s3.amazonaws.com/jbosssetup',
         'zip_file': 'jboss-eap-6.4.0.zip',
         'zip_file_md5': '9a5d37631919a111ddf42ceda1a9f0b5'
     },

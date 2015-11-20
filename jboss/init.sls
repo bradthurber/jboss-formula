@@ -24,14 +24,15 @@ make_sure_jboss_user_is_present:
 unzip {{ jboss.zip_file }}:
   archive.extracted:
     - archive_format: zip
-    - archive_user: jboss
+    - group: jboss
     - if_missing: {{ jboss.jboss_home }}/{{ jboss.version_file }}
     - keep: True
     - name: {{ jboss.unzip_path }}
 # get the files from s3 until we figure out why salt:// links are not working
 #    - source: salt://jboss/files/{{ jboss.zip_file }}
-    - source: https://s3.amazonaws.com/karpractice/{{ jboss.zip_file }}
+    - source: {{ jboss.zip_file_folder }}/{{ jboss.zip_file }}
     - source_hash: md5={{ jboss.zip_file_md5 }}
+    - user: jboss
 
 # *TEMPORARY*: Until next salt release (post 2015.5), archive.extracted doesn't put group on extracted dirs/files
 # http://docs.saltstack.com/en/develop/ref/states/all/salt.states.archive.html#module-salt.states.archive
