@@ -2,7 +2,7 @@
 
 include:
   - jboss
-  - add_user_temp_admin
+  - jboss.add_user_temp_admin
 
 # open interface management
 open_interface_management:
