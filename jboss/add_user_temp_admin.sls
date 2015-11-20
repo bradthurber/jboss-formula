@@ -15,3 +15,5 @@ add_user_temp_admin:
     - name: {{ jboss.jboss_home }}/bin/add-user.sh -u '{{ jboss.admin_account.username }}' -p '{{ jboss.admin_account.password }}' -g 'admin'
     - user: {{ jboss.jboss_user }}
     - unless: grep "{{ jboss.admin_account.username }}" {{ jboss.jboss_home }}/domain/configuration/mgmt-users.properties
+    - require:
+      - file: relax_symbol_restrict_on_add_user_password
