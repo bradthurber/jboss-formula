@@ -5,7 +5,7 @@ test_echo:
 
 
 sampleDS:
-  jboss7backport.datasource_exists:
+  jboss7.datasource_exists:
    - recreate: False
    - datasource_properties:
        driver-name: mysql
@@ -19,7 +19,7 @@ sampleDS:
    - profile: 'full-ha'
 
 jndi_entries_created:
-  jboss7backport.bindings_exist:
+  jboss7.bindings_exist:
    - bindings:
       'java:global/sampleap/environment': 'DEV2'
       'java:global/sampleapp/configurationFile': '/var/opt/sampleapp/config.properties'
