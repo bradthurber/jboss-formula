@@ -261,11 +261,11 @@ def update_datasource(jboss_config, name, new_properties, profile=None):
 def __get_datasource_resource_description(jboss_config, name, profile=None):
     log.debug("======================== MODULE FUNCTION: jboss7.__get_datasource_resource_description, name=%s, profile=%s", name, profile)
 
-    if profile is None:
-        operation = '/subsystem=datasources/data-source="{name}":read-resource-description'.format(name=name)
-    else:
-        operation = '/profile="{profile}"/subsystem=datasources/data-source="{name}":read-resource-description'.format(name=name, profile=profile)
+    operation = '/subsystem=datasources/data-source="{name}":read-resource-description'.format(name=name)
 
+    if profile is not None:
+        operation = '/profile="{profile}"'.format(profile=profile) + operation
+    
     operation_result = __salt__['jboss7_cli.run_operation'](jboss_config, operation)
     if operation_result['outcome']:
         return operation_result['result']
