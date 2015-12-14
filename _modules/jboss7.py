@@ -164,20 +164,15 @@ def create_datasource(jboss_config, name, datasource_properties, profile=None):
     log.debug("======================== MODULE FUNCTION: jboss7.create_datasource, name=%s, profile=%s", name, profile)
     ds_resource_description = __get_datasource_resource_description(jboss_config, name, profile)
 
-    if profile is None:
-        operation = '/subsystem=datasources/data-source="{name}":add({properties})'.format(
-                name=name,
-                properties=__get_properties_assignment_string(datasource_properties, ds_resource_description)
-      )
-    else:
-        operation = '/profile="{profile}"/subsystem=datasources/data-source="{name}":add({properties})'.format(
-                name=name,
-                profile=profile,
-                properties=__get_properties_assignment_string(datasource_properties, ds_resource_description)
-      )
+    operation = '/subsystem=datasources/data-source="{name}":add({properties})'.format(
+        name=name,
+        properties=__get_properties_assignment_string(datasource_properties, ds_resource_description)
+    )
+
+    if profile is not None:
+        operation = '/profile="{profile}"'.format(profile=profile) + operation
 
     return __salt__['jboss7_cli.run_operation'](jboss_config, operation, fail_on_error=False)
-
 
 def __get_properties_assignment_string(datasource_properties, ds_resource_description):
     assignment_strings = []
