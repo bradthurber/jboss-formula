@@ -186,7 +186,7 @@ def datasource_exists(name, jboss_config, datasource_properties, recreate=False,
                 ret['comment'] = 'Datasource created.'
             else:
                 ret['result'] = False
-                ret['comment'] = 'Could not create datasource. Stdout: '+create_result
+                ret['comment'] = 'Could not create datasource. Stdout: '+create_result['stdout']
         else:
             raise CommandExecutionError('Unable to handle error', ds_result['failure-description'])
 
