@@ -173,6 +173,7 @@ def create_datasource(jboss_config, name, datasource_properties, profile=None):
 
     return __salt__['jboss7_cli.run_operation'](jboss_config, operation, fail_on_error=False)
 
+    
 def __get_properties_assignment_string(datasource_properties, ds_resource_description):
     assignment_strings = []
     ds_attributes = ds_resource_description['attributes']

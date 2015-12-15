@@ -179,7 +179,6 @@ def datasource_exists(name, jboss_config, datasource_properties, recreate=False,
     else:
         if ds_result['err_code'] == 'JBAS014807':  # ok, resource not exists:
             create_result = __salt__['jboss7.create_datasource'](jboss_config=jboss_config, name=name, datasource_properties=datasource_properties, profile=profile)
-            log.debug('!*!*!*! create_result is %s', str(create_result))
             if create_result['success']:
                 read_result = __salt__['jboss7.read_datasource'](jboss_config=jboss_config, name=name, profile=profile)
                 ds_new_properties = read_result['result']
