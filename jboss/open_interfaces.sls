@@ -9,7 +9,7 @@ open_interface_management:
   file.replace:
     - name: {{ jboss.jboss_hostxml }}
     - pattern: (<inet-address value="\$\{jboss\.bind\.address\.management:)(.*)(\}"/>)
-    - repl: \g<1>{{ minion_ip4[0] }}\g<3>
+    - repl: \g<1>0.0.0.0\g<3>
     - watch_in:
       - module: jboss-restart
 
