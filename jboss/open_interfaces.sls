@@ -17,14 +17,21 @@ open_interface_management:
     - watch_in:
       - module: jboss-restart
 
-# open interface public
-open_interface_public:
-  cmd.run:
-    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/interface=public:write-attribute(name=inet-address,value="${jboss.bind.address:{{ minion_ip4 }}}"' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}'
-    - require:
-      - cmd: add_user_temp_admin
-    - unless: grep "jboss.bind.address:{{ minion_ip4 }}" {{ jboss.jboss_home }}/domain/configuration/host.xml
-    - user: {{ jboss.jboss_user }}
+#open_interface_public_using_cli:
+#  cmd.run:
+#    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/interface=public:write-attribute(name=inet-address,value="${jboss.bind.address:{{ minion_ip4 }}}"' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}'
+#    - require:
+#      - cmd: add_user_temp_admin
+#    - unless: grep "jboss.bind.address:{{ minion_ip4 }}" {{ jboss.jboss_home }}/domain/configuration/host.xml
+#    - user: {{ jboss.jboss_user }}
+#    - watch_in:
+#      - module: jboss-restart
+
+open_interface_public_direct_file_edit:
+  file.replace:
+    - name: {{ jboss.jboss_hostxml }}
+    - pattern: (<inet-address value="\$\{jboss\.bind\.address:)(.*)(\}"/>)
+    - repl: \1{{ minion_ip4 }}\3
     - watch_in:
       - module: jboss-restart
     
