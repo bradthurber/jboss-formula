@@ -31,7 +31,7 @@ open_interface_public_direct_file_edit:
   file.replace:
     - name: {{ jboss.jboss_hostxml }}
     - pattern: (<inet-address value="\$\{jboss\.bind\.address:)(.*)(\}"/>)
-    - repl: \1{{ minion_ip4 }}\3
+    - repl: \1{{ minion_ip4[0] }}\3
     - watch_in:
       - module: jboss-restart
     
