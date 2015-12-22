@@ -1,4 +1,7 @@
 ########
+# NOTE: This is a stubbed out state. We likely will never need it since the
+# server binding configuration has been changed from 0.0.0.0 to the server IP address.
+#
 # To enable cross-node clustering, the JVM jgroups.bind_addr must be set
 # -or- we must bind the server to a specific IP address rather than 0.0.0.0
 #
