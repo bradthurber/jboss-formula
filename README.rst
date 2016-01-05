@@ -50,6 +50,11 @@ Configures JBoss EAP to run against an LDAP server rather than the local file-ba
 
 Configures the roles on the jboss domain controller
 
+``jboss.dc_datasources``
+------------
+
+Configures datasources on the domain controller
+
 ``jboss.dc_mod_cluster_configuration``
 ------------
 
