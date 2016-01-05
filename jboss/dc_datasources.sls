@@ -1,8 +1,8 @@
 {% from "jboss/map.jinja" import jboss with context %}
 
-{% for jboss_datasource in jboss.datasources.iteritems() -%}
-test_echo_ds:
+{% for ds_name, ds_params in jboss.datasources.items() -%}
+test_echo_ds_{{ ds_name }}:
   cmd.run:
-    - name: 'echo {{ jboss_datasource|json }}'
+    - name: 'echo {{ ds_params|json }}'
 {% endfor %}
 
