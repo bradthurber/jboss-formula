@@ -1,8 +1,12 @@
 {% from "jboss/map.jinja" import jboss with context %}
 
-{% for ds_name, ds_params in jboss.datasources.items() -%}
-test_echo_ds_{{ ds_name }}:
-  cmd.run:
-    - name: 'echo {{ ds_params|json }}'
+{% for datasource_name, datasource_properties in jboss.datasources.items() -%}
+datasource_exists_{{ datasource_name }}:
+  {{ ds_name }}:
+    jboss7.datasource_exists:
+     - recreate: False
+     - datasource_properties: {{ datasource_properties }}
+     - jboss_config:  {{ jboss.jboss_config }}
+     - profile: 'full-ha'
 {% endfor %}
 
