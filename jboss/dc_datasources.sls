@@ -2,7 +2,7 @@
 
 {% for datasource_name, datasource_properties in jboss.datasources.items() -%}
 datasource_exists_{{ datasource_name }}:
-  {{ ds_name }}:
+  {{ datasource_name }}:
     jboss7.datasource_exists:
      - recreate: False
      - datasource_properties: {{ datasource_properties }}
