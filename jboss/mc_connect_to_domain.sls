@@ -12,9 +12,10 @@
     
 include:
   - jboss
+  - python.augeas
 
 ldap_security_realm:
-  augeas.change:  
+  augeas.change:
 #    - context: /files/tmp/host.xml
     - context: {{ jboss.jboss_home }}/domain/configuration/host.xml
     - changes:
