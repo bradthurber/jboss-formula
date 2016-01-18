@@ -24,6 +24,7 @@ ldap_security_realm:
       - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities
       - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities/secret
       - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities/secret/#attribute/value "{{ connector_base64_password }}"
+    - lens: Xml.lns
     - require:
       - pkg: python-augeas
 
