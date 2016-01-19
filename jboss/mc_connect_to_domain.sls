@@ -16,8 +16,8 @@ include:
 
 ldap_security_realm:
   augeas.change:
-#    - context: /files/tmp/host.xml
-    - context: {{ jboss.jboss_home }}/domain/configuration/host.xml
+    - context: /files/tmp/host.xml
+#    - context: {{ jboss.jboss_home }}/domain/configuration/host.xml
     - changes:
       - rm /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]
       - ins security-realm after /host/management/security-realms/security-realm[last()]
