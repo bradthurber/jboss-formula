@@ -22,7 +22,7 @@ ldap_security_realm:
       - rm /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]
       - ins security-realm after /host/management/security-realms/security-realm[last()]
       - set /host/management/security-realms/security-realm[last()]/#attribute/name "LdapManagementRealm"
-      - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities
+      - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities ""
 #      - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities/secret
 #      - set /host/management/security-realms/security-realm[#attribute/name="LdapManagementRealm"]/server-identities/secret/#attribute/value "{{ connector_base64_password }}"
     - lens: Xml.lns
