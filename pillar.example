@@ -14,8 +14,12 @@ jboss:
     server_port: 389
   lookup:
     install_type: rpm
-  jboss_role_to_ldap_group_mapping:
+  jboss_role_to_ldap_groups_mapping:
     {#- standard available role names: Operator, Maintainer, Auditor, Monitor, Administrator, SuperUser, Deployer #}
-    Administrator: corp-sg-jbossadmins-dev
-    Maintainer: corp-sg-jbossdevelopers-dev
-    Monitor: corp-sg-jbossmonitors  
+    Administrator:
+      - corp-sg-jbossadmins-test
+      - corp-sg-jbossdevelopers-dev
+    Maintainer:
+      - corp-sg-jbossadmins-test
+    Monitor:
+      - corp-sg-jbossmonitors
