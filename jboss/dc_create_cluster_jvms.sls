@@ -7,10 +7,9 @@ include:
 ##### 
 
 {% for app in jboss.clusterapps %}
- # create a server group "sg-poc"
 create_server_group_{{ app }}:
   cmd.run:
-    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/server-group=sg-poc/:add(socket-binding-group=full-ha-sockets,profile=full-ha)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/server-group=sg-{{ app }}/:add(socket-binding-group=full-ha-sockets,profile=full-ha)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
     - unless: {{ jboss.jboss_home }}/bin//jboss-cli.sh -c '/server-group=sg-{{ app }}/:read-resource' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}'
     - user: {{ jboss.jboss_user }}
 
