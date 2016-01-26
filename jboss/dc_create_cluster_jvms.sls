@@ -31,7 +31,7 @@ create_server_{{ server  }}_config_{{ app }}:
  # start the "{{ app }}" server
 start_{{ app }}_server:
   cmd.wait:
-    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/host=master/server-config={{ app }}/:start' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/host={{ server }}/server-config={{ app }}/:start' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
     - watch:
       - cmd: create_server_{{ server  }}_config_{{ app }}
     - user: {{ jboss.jboss_user }}    
