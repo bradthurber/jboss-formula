@@ -15,14 +15,14 @@ create_server_group_{{ app }}:
     - user: {{ jboss.jboss_user }}
 
 
-{%- from "jbossapache/map.jinja" import jbossapache_settings with context %}
-{%- set mod_cluster_settings = jbossapache_settings.mod_cluster %}
+{% from "jbossapache/map.jinja" import jbossapache_settings with context %}
+{% set mod_cluster_settings = jbossapache_settings.mod_cluster %}
 
-{%- set minion_jboss_environment_name = grains['environment'] %}
-{%- for server, addrs in salt['mine.get']('G@roles:mod-cluster-node and G@environment:'~minion_jboss_environment_name, 'network.ip_addrs', expr_form='compound').items() %}
+{% set minion_jboss_environment_name = grains['environment'] %}
+{% for server, addrs in salt['mine.get']('G@roles:mod-cluster-node and G@environment:'~minion_jboss_environment_name, 'network.ip_addrs', expr_form='compound').items() %}
     
  # create server config "{{ app }}"
-create_server_{{ server  }}_config_{{ app }}:
+create_server_{{ server }}_config_{{ app }}:
   cmd.run:
     - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/host={{ server }}/server-config={{ app }}/:add(auto-start=true,group=sg-{{ app }},socket-binding-port-offset=1000)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
     - unless: {{ jboss.jboss_home }}/bin//jboss-cli.sh -c '/host={{ server }}/server-config={{ app }}/:read-resource' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}'
@@ -34,12 +34,10 @@ start_{{ app }}_server:
     - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/host={{ server }}/server-config={{ app }}/:start' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
     - watch:
       - cmd: create_server_{{ server }}_config_{{ app }}
-    - user: {{ jboss.jboss_user }}    
+    - user: {{ jboss.jboss_user }} 
 
-{%- endfor %}
-
-  
-
+{% endfor %}
+{% endfor %}
 
 
 
