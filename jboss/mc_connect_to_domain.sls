@@ -14,6 +14,15 @@ include:
   - jboss
   - python.augeas
 
+# TODO: change this to use augeas or direct edit rather than CLI
+change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}:
+  cmd.run:
+    - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:write-attribute(name=name,value={{ mc_hostname }})'
+    - user: {{ jboss.jboss_user }}
+    - onlyif: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:read-resource(attributes-only=true)'
+    - watch_in:
+      - module: jboss-restart
+  
 ldap_security_realm:
   augeas.change:
     - context: /files{{ jboss.jboss_home }}/domain/configuration/host.xml
@@ -27,19 +36,10 @@ ldap_security_realm:
     - lens: Xml.lns
     - require:
       - pkg: python-augeas
-      
-      
-      
+          
 #           - ins security-realm after /host/management/security-realms/security-realm[last()]
 #    - set /host/management/security-realms/security-realm[last()]/#attribute/name "LdapManagementRealm"
 
-#change_member_controller_jboss_host_name_from_master_to_{{ mc_hostname }}:
-# cmd.run:
-    # - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:write-attribute(name=name,value={{ mc_hostname }})'
-    # - user: {{ jboss.jboss_user }}
-    # - onlyif: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c --command='/host=master/:read-resource(attributes-only=true)'
-    # - watch_in:
-      # - module: jboss-restart
   
 # member_controller_{{ mc_hostname }}_add_ldap_security_realm:
   # cmd.run:
