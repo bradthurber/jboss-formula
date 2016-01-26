@@ -23,7 +23,7 @@ turn_off_mod_cluster_advertisement:
     - onlyif: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:read-attribute(name=advertise)' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' |grep 'result'|grep true
     - user: {{ jboss.jboss_user }}
         
-# tell Jboss server the IP addresses of all the apache servers in this jboss domain (grain: environment)     
+# tell JBoss server the IP addresses of all the apache servers in this jboss domain (grain: environment)     
 configure_mod_cluster_apache_host_ips:
   cmd.run:
     - name: {{ jboss.jboss_home }}/bin/jboss-cli.sh -c '/profile=full-ha/subsystem=modcluster/mod-cluster-config=configuration/:write-attribute(name=proxy-list,value="{{ apache_ips |join(', ') }}")' --user='{{ jboss.admin_account.username }}' --password='{{ jboss.admin_account.password }}' 
